@@ -1,33 +1,77 @@
 import SwiftUI
 
 struct DashboardView: View {
-    @ObservedObject private var health = HealthKitManager.shared
-    @StateObject private var orderFetcher = FoodOrderFetcher()
+    @StateObject private var viewModel = DashboardViewModel()
+    @State private var showShareSheet = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Group {
-                    Text("Weight: \(health.currentWeight ?? 0, specifier: "%.1f")")
-                    Text("Average Steps: \(health.averageSteps ?? 0, specifier: "%.0f")")
-                    Text("Sleep Hours: \(health.sleepHours ?? 0, specifier: "%.1f")")
-                    Text("Days since last order: \(orderFetcher.daysSinceLastOrder())")
-                    Text("Longest healthy streak: \(orderFetcher.longestStreak()) days")
+        NavigationView {
+            VStack {
+                HStack {
+                    Button(action: {
+                        viewModel.syncData()
+                    }) {
+                        Text("Sync Now")
+                    }
+                    .padding()
+
+                    Spacer()
+
+                    Button(action: {
+                        self.showShareSheet = true
+                    }) {
+                        Text("Export Data")
+                    }
+                    .padding()
+                }
+
+                if let lastSyncTime = viewModel.lastSyncTime {
+                    Text("Last sync: \(lastSyncTime, formatter: itemFormatter)")
+                        .font(.footnote)
+                } else {
+                    Text("Not synced yet")
+                        .font(.footnote)
+                }
+
+                List(viewModel.healthData) { data in
+                    VStack(alignment: .leading) {
+                        Text("Date: \(data.date, formatter: itemFormatter)")
+                        Text("Steps: \(data.stepCount ?? 0)")
+                        Text("Weight: \(data.weight ?? 0, specifier: "%.1f")")
+                        Text("Sleep: \(data.sleepDuration ?? 0, specifier: "%.1f") hours")
+                    }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-        }
-        .onAppear {
-            health.fetchHealthData()
-        }
-        .task {
-            // Replace with your sheet URL
-            if let url = URL(string: "https://example.com/orders.csv") {
-                try? await orderFetcher.fetch(from: url)
+            .navigationTitle("LifeHub")
+            .onAppear {
+                viewModel.syncData()
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let fileURL = viewModel.getCSVFileURL() {
+                    ActivityViewController(activityItems: [fileURL])
+                }
             }
         }
     }
+}
+
+private let itemFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .medium
+    return formatter
+}()
+
+struct ActivityViewController: UIViewControllerRepresentable {
+    var activityItems: [Any]
+    var applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
 }
 
 #Preview {
