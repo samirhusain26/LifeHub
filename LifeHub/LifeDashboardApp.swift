@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct LifeDashboardApp: App {
@@ -6,5 +7,6 @@ struct LifeDashboardApp: App {
         WindowGroup {
             DashboardView()
         }
+        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self, DailyLog.self])
     }
 }

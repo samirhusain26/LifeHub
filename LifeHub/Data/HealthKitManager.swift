@@ -59,13 +59,13 @@ class HealthKitManager {
             dispatchGroup.leave()
         }
 
-        dispatchGroup.notify(queue: .main) {
-            let healthData = self.combineData(
-                steps: dailyStepCounts,
-                weights: dailyWeights,
-                sleep: dailySleepData
-            )
-            completion(healthData)
+        dispatchGroup.notify(queue: .global()) {
+            let healthData = self.combineData(steps: dailyStepCounts, weights: dailyWeights, sleep: dailySleepData)
+            
+            // Ensure the final completion is on the main thread as it will update the UI
+            DispatchQueue.main.async {
+                completion(healthData)
+            }
         }
     }
 
