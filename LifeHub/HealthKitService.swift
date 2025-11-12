@@ -120,7 +120,8 @@ class HealthKitService {
                                         continuation.resume(throwing: error) // Other error, throw it
                                     }
                                     return
-                                }                let sum = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+                                }
+                let sum = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
                 continuation.resume(returning: sum)
             }
             healthStore.execute(query)
