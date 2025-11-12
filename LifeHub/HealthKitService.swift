@@ -95,6 +95,10 @@ class HealthKitService {
                     }
                     return
                 }
+                guard let sample = samples?.first as? HKQuantitySample else {
+                    continuation.resume(returning: nil)
+                    return
+                }
                 continuation.resume(returning: sample.quantity.doubleValue(for: .gramUnit(with: .kilo)))
             }
             healthStore.execute(query)
