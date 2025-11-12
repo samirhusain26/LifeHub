@@ -7,6 +7,9 @@ class DashboardViewModel: ObservableObject {
     @Published var longestStreakNoOrders12Mo: Int = 0
     @Published var weightLostFromHeaviest12Mo: Double = 0.0
     @Published var averageStepsLast7Days: Int = 0
+    @Published var statusMessage: String = ""
+    
+    private let healthKitService = HealthKitService()
 
     func calculateSummaryMetrics(context: ModelContext) {
         Task {
@@ -114,7 +117,24 @@ class DashboardViewModel: ObservableObject {
             print("Failed to fetch health metrics for step calculation: \(error)")
         }
         return 0
-    func generateDashboardPayload() -> String? {
+    }
+    func fetchHealthData(context: ModelContext) {
+        Task {
+            do {
+                try await healthKitService.requestAuthorization()
+                statusMessage = "Fetching data..."
+                try await healthKitService.fetchAndSaveHealthData(for: 30, context: context)
+                statusMessage = "Health data fetched and saved."
+                // Recalculate metrics after fetching new data
+                calculateSummaryMetrics(context: context)
+            } catch {
+                statusMessage = "Error: \(error.localizedDescription)"
+                print("Error fetching or saving health data: \(error)")
+            }
+        }
+    }
+
+    func encodePayload() -> String? {
         let payload = DashboardPayload(
             lastUpdated: Date(),
             daysSinceLastFoodOrder: self.daysSinceLastFoodOrder,

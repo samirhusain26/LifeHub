@@ -7,6 +7,6 @@ struct LifeDashboardApp: App {
         WindowGroup {
             DashboardView()
         }
-        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self, DailyLog.self])
+        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self])
     }
 }

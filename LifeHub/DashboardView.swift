@@ -6,99 +6,123 @@ struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var jsonOutput: String = "JSON output will appear here..."
     
-    private let healthKitService = HealthKitService()
+    
+    let columns: [GridItem] = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                
-                // Summary Metrics Display
-                VStack(alignment: .leading, spacing: 15) {
-                    Text("Summary Metrics")
-                        .font(.title2).bold()
+            ScrollView {
+                VStack(spacing: 20) {
                     
-                    MetricView(label: "Days Since Last Food Order:", value: "\(viewModel.daysSinceLastFoodOrder)")
-                    MetricView(label: "Longest Streak (No Orders, 12 Mo):", value: "\(viewModel.longestStreakNoOrders12Mo) days")
-                    MetricView(label: "Weight Lost (from heaviest, 12 Mo):", value: String(format: "%.1f kg", viewModel.weightLostFromHeaviest12Mo))
-                    MetricView(label: "Average Steps (Last 7 Days):", value: "\(viewModel.averageStepsLast7Days)")
-                }
-                .padding()
-                .background(Color(UIColor.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-
-                // JSON Output
-                ScrollView {
-                    Text(jsonOutput)
-                        .font(.system(.body, design: .monospaced))
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .background(Color(UIColor.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-
-                Spacer()
-
-                // Action Buttons
-                VStack(spacing: 15) {
-                    Button("Refresh Metrics") {
-                        viewModel.calculateSummaryMetrics(context: modelContext)
+                    // Summary Metrics Grid
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        MetricCardView(
+                            title: "Weight Loss",
+                            value: String(format: "%.1f lbs", viewModel.weightLostFromHeaviest12Mo),
+                            iconName: "scalemass.fill"
+                        )
+                        MetricCardView(
+                            title: "Avg. Steps (7d)",
+                            value: "\(viewModel.averageStepsLast7Days)",
+                            iconName: "figure.walk"
+                        )
+                        MetricCardView(
+                            title: "Days Since Order",
+                            value: "\(viewModel.daysSinceLastFoodOrder)",
+                            iconName: "cart.fill"
+                        )
+                        MetricCardView(
+                            title: "Longest Streak",
+                            value: "\(viewModel.longestStreakNoOrders12Mo) days",
+                            iconName: "flame.fill"
+                        )
                     }
-                    .buttonStyle(.bordered)
+                    .padding(.horizontal)
 
-                    Button("Generate JSON") {
-                        if let json = viewModel.generateDashboardPayload() {
-                            self.jsonOutput = json
-                        } else {
-                            self.jsonOutput = "Failed to generate JSON."
+                    // JSON Output
+                    ScrollView {
+                        Text(jsonOutput)
+                            .font(.system(.body, design: .monospaced))
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+
+                    // Action Buttons
+                    VStack(spacing: 15) {
+                        Button("Refresh Metrics") {
+                            viewModel.calculateSummaryMetrics(context: modelContext)
                         }
-                    }
-                    .buttonStyle(.borderedProminent)
+                        .buttonStyle(.bordered)
 
-                    Button("Fetch Health Data (Last 30 Days)") {
-                        Task {
-                            do {
-                                try await healthKitService.requestAuthorization()
-                                try await healthKitService.fetchAndSaveHealthData(for: 30, context: modelContext)
-                                print("Health data fetched and saved.")
-                                // Recalculate metrics after fetching new data
-                                viewModel.calculateSummaryMetrics(context: modelContext)
-                            } catch {
-                                print("Error fetching or saving health data: \(error)")
+                        Button("Generate JSON") {
+                            if let json = viewModel.encodePayload() {
+                                self.jsonOutput = json
+                            } else {
+                                self.jsonOutput = "Failed to generate JSON."
                             }
                         }
+                        .buttonStyle(.borderedProminent)
+
+                        Button("Fetch Health Data (Last 30 Days)") {
+                            viewModel.fetchHealthData(context: modelContext)
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Text(viewModel.statusMessage)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 5)
                     }
-                    .buttonStyle(.bordered)
+                    .padding()
                 }
-                .padding()
+                .padding(.vertical)
             }
             .navigationTitle("LifeHub Dashboard")
             .onAppear {
                 viewModel.calculateSummaryMetrics(context: modelContext)
             }
+            .background(Color(.systemGroupedBackground)) // Use a grouped background for better contrast
         }
     }
 }
 
-struct MetricView: View {
-    let label: String
+struct MetricCardView: View {
+    let title: String
     let value: String
+    let iconName: String
 
     var body: some View {
-        HStack {
-            Text(label)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: iconName)
+                .font(.title)
+                .foregroundColor(.accentColor)
+            
             Spacer()
+            
             Text(value)
-                .font(.body)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            
+            Text(title)
+                .font(.footnote)
                 .foregroundColor(.secondary)
         }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
 
 #Preview {
     DashboardView()
-        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self, DailyLog.self], inMemory: true)
+        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self], inMemory: true)
 }

@@ -10,11 +10,18 @@ class HealthKitService {
             throw NSError(domain: "com.example.LifeHub", code: 1, userInfo: [NSLocalizedDescriptionKey: "HealthKit is not available on this device."])
         }
 
+        guard let bodyMassType = HKObjectType.quantityType(forIdentifier: .bodyMass),
+              let stepCountType = HKObjectType.quantityType(forIdentifier: .stepCount),
+              let activeEnergyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned),
+              let sleepAnalysisType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            throw NSError(domain: "com.example.LifeHub", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not create HealthKit types."])
+        }
+
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .bodyMass)!,
-            HKObjectType.quantityType(forIdentifier: .stepCount)!,
-            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+            bodyMassType,
+            stepCountType,
+            activeEnergyType,
+            sleepAnalysisType
         ]
 
         try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
@@ -31,8 +38,8 @@ class HealthKitService {
             guard let date = calendar.date(byAdding: .day, value: i, to: startDate) else { continue }
             
             async let weight = fetchLatestBodyMass(for: date)
-            async let steps = fetchCumulativeSum(for: .stepCount, for: date)
-            async let calories = fetchCumulativeSum(for: .activeEnergyBurned, for: date)
+            async let steps = fetchCumulativeSum(for: .stepCount, unit: .count(), for: date)
+            async let calories = fetchCumulativeSum(for: .activeEnergyBurned, unit: .kilocalorie(), for: date)
             async let sleep = fetchSleepAnalysis(for: date)
 
             let (weightResult, stepsResult, caloriesResult, sleepResult) = try await (weight, steps, calories, sleep)
@@ -94,7 +101,7 @@ class HealthKitService {
         }
     }
 
-    private func fetchCumulativeSum(for quantityTypeIdentifier: HKQuantityTypeIdentifier, for date: Date) async throws -> Double {
+    internal func fetchCumulativeSum(for quantityTypeIdentifier: HKQuantityTypeIdentifier, unit: HKUnit, for date: Date) async throws -> Double {
         guard let quantityType = HKQuantityType.quantityType(forIdentifier: quantityTypeIdentifier) else { return 0 }
 
         let calendar = Calendar.current
@@ -109,7 +116,7 @@ class HealthKitService {
                     continuation.resume(throwing: error)
                     return
                 }
-                let sum = result?.sumQuantity()?.doubleValue(for: .count()) ?? 0
+                let sum = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
                 continuation.resume(returning: sum)
             }
             healthStore.execute(query)
