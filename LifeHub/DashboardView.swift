@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct DashboardView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+    @StateObject var viewModel: DashboardViewModel
     @Environment(\.modelContext) private var modelContext
     @State private var jsonOutput: String = "JSON output will appear here..."
     
@@ -55,22 +55,19 @@ struct DashboardView: View {
 
                     // Action Buttons
                     VStack(spacing: 15) {
-                        Button("Refresh Metrics") {
-                            viewModel.calculateSummaryMetrics(context: modelContext)
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button("Generate JSON") {
-                            if let json = viewModel.encodePayload() {
-                                self.jsonOutput = json
-                            } else {
-                                self.jsonOutput = "Failed to generate JSON."
-                            }
+                        Button("Refresh All Data") {
+                            viewModel.fetchAllDataAndRecalculateMetrics()
                         }
                         .buttonStyle(.borderedProminent)
 
-                        Button("Fetch Health Data (Last 30 Days)") {
-                            viewModel.fetchHealthData(context: modelContext)
+                        Button("Generate JSON") {
+                            Task {
+                                if let json = await viewModel.encodePayload() {
+                                    self.jsonOutput = json
+                                } else {
+                                    self.jsonOutput = "Failed to generate JSON."
+                                }
+                            }
                         }
                         .buttonStyle(.bordered)
                         
@@ -85,7 +82,7 @@ struct DashboardView: View {
             }
             .navigationTitle("LifeHub Dashboard")
             .onAppear {
-                viewModel.calculateSummaryMetrics(context: modelContext)
+                viewModel.calculateSummaryMetrics()
             }
             .background(Color(.systemGroupedBackground)) // Use a grouped background for better contrast
         }
@@ -123,6 +120,8 @@ struct MetricCardView: View {
 
 
 #Preview {
-    DashboardView()
-        .modelContainer(for: [DailyHealthMetric.self, FoodOrder.self], inMemory: true)
+    let container = try! ModelContainer(for: DailyHealthMetric.self, FoodOrder.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let viewModel = DashboardViewModel(modelContainer: container)
+    DashboardView(viewModel: viewModel)
+        .modelContainer(container)
 }

@@ -16,7 +16,12 @@ class FoodOrderFetcher {
         return df
     }()
 
-    func fetchAndUpsertFoodOrders(from urlString: String, context: ModelContext) async throws {
+    struct OrderData {
+        var totalSpend: Double = 0.0
+        var messageIds: Set<String> = []
+    }
+
+    func fetchFoodOrders(from urlString: String) async throws -> [Date: OrderData] {
         guard let url = URL(string: urlString) else {
             throw FoodOrderFetcherError.invalidURL
         }
@@ -37,42 +42,45 @@ class FoodOrderFetcher {
             throw FoodOrderFetcherError.dataNotFound
         }
         
-        // Remove header row
-        lines.removeFirst()
+        // Process header
+        let header = lines.removeFirst().split(separator: ",").map { String($0.trimmingCharacters(in: .whitespacesAndNewlines)).lowercased() }
+        
+        guard let dateIndex = header.firstIndex(of: "date"),
+              let amountIndex = header.firstIndex(of: "amount"),
+              let messageIdIndex = header.firstIndex(of: "messageid") else {
+            throw FoodOrderFetcherError.parsingError("CSV header is missing required columns: date, amount, messageid.")
+        }
+
+        var aggregatedData: [Date: OrderData] = [:]
 
         for (index, line) in lines.enumerated() {
             let parts = line.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
             
-            guard parts.count == 3 else {
-                throw FoodOrderFetcherError.parsingError("Invalid number of columns in row \(index + 2).")
+            if parts.count != header.count {
+                // Log a warning for mismatched column count, but continue processing other lines
+                print("Warning: Row \(index + 2) has \(parts.count) columns, expected \(header.count).")
+                continue
             }
             
-            guard let date = dateFormatter.date(from: parts[0]) else {
-                throw FoodOrderFetcherError.parsingError("Invalid date format in row \(index + 2).")
+            guard let date = dateFormatter.date(from: parts[dateIndex]) else {
+                print("Warning: Invalid date format in row \(index + 2).")
+                continue
             }
             
-            guard let totalSpend = Double(parts[1]) else {
-                throw FoodOrderFetcherError.parsingError("Invalid totalSpend format in row \(index + 2).")
+            guard let amount = Double(parts[amountIndex]) else {
+                print("Warning: Invalid amount format in row \(index + 2).")
+                continue
             }
             
-            guard let orderCount = Int(parts[2]) else {
-                throw FoodOrderFetcherError.parsingError("Invalid orderCount format in row \(index + 2).")
-            }
-            
+            let messageId = parts[messageIdIndex]
             let startOfDay = Calendar.current.startOfDay(for: date)
-            let fetchDescriptor = FetchDescriptor<FoodOrder>(
-                predicate: #Predicate { $0.date == startOfDay }
-            )
-
-            if let existingOrder = try context.fetch(fetchDescriptor).first {
-                existingOrder.totalSpend = totalSpend
-                existingOrder.orderCount = orderCount
-            } else {
-                let newOrder = FoodOrder(date: startOfDay, totalSpend: totalSpend, orderCount: orderCount)
-                context.insert(newOrder)
-            }
+            
+            var orderData = aggregatedData[startOfDay, default: OrderData()]
+            orderData.totalSpend += amount
+            orderData.messageIds.insert(messageId)
+            aggregatedData[startOfDay] = orderData
         }
         
-        try context.save()
+        return aggregatedData
     }
 }

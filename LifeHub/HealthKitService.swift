@@ -27,12 +27,14 @@ class HealthKitService {
         try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
     }
 
-    func fetchAndSaveHealthData(for days: Int, context: ModelContext) async throws {
+    func fetchHealthData(for days: Int) async throws -> [DailyHealthMetric] {
         let calendar = Calendar.current
         let endDate = calendar.startOfDay(for: Date())
         guard let startDate = calendar.date(byAdding: .day, value: -days, to: endDate) else {
             throw NSError(domain: "com.example.LifeHub", code: 2, userInfo: [NSLocalizedDescriptionKey: "Could not calculate start date."])
         }
+
+        var metrics: [DailyHealthMetric] = []
 
         for i in 0..<days {
             guard let date = calendar.date(byAdding: .day, value: i, to: startDate) else { continue }
@@ -44,35 +46,19 @@ class HealthKitService {
 
             let (weightResult, stepsResult, caloriesResult, sleepResult) = try await (weight, steps, calories, sleep)
 
-            let startOfDay = calendar.startOfDay(for: date)
-            let fetchDescriptor = FetchDescriptor<DailyHealthMetric>(
-                predicate: #Predicate { $0.date == startOfDay }
+            let newMetric = DailyHealthMetric(
+                date: date,
+                weight: weightResult,
+                steps: Int(stepsResult),
+                activeCalories: caloriesResult,
+                sleepDurationMinutes: sleepResult.totalSleep / 60,
+                sleepStartTime: sleepResult.sleepStart,
+                sleepWakeTime: sleepResult.wakeTime
             )
-            
-            if let existingMetric = try context.fetch(fetchDescriptor).first {
-                // Update existing metric
-                existingMetric.weight = weightResult ?? existingMetric.weight
-                existingMetric.steps = Int(stepsResult)
-                existingMetric.activeCalories = caloriesResult
-                existingMetric.sleepDurationMinutes = sleepResult.totalSleep / 60
-                existingMetric.sleepStartTime = sleepResult.sleepStart ?? existingMetric.sleepStartTime
-                existingMetric.sleepWakeTime = sleepResult.wakeTime ?? existingMetric.sleepWakeTime
-            } else {
-                // Create new metric
-                let newMetric = DailyHealthMetric(
-                    date: date,
-                    weight: weightResult,
-                    steps: Int(stepsResult),
-                    activeCalories: caloriesResult,
-                    sleepDurationMinutes: sleepResult.totalSleep / 60,
-                    sleepStartTime: sleepResult.sleepStart,
-                    sleepWakeTime: sleepResult.wakeTime
-                )
-                context.insert(newMetric)
-            }
+            metrics.append(newMetric)
         }
         
-        try context.save()
+        return metrics
     }
 
     private func fetchLatestBodyMass(for date: Date) async throws -> Double? {
@@ -99,7 +85,7 @@ class HealthKitService {
                     continuation.resume(returning: nil)
                     return
                 }
-                continuation.resume(returning: sample.quantity.doubleValue(for: .gramUnit(with: .kilo)))
+                continuation.resume(returning: sample.quantity.doubleValue(for: .pound()))
             }
             healthStore.execute(query)
         }

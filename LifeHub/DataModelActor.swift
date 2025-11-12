@@ -3,7 +3,7 @@ import SwiftData
 import TabularData
 
 // New Codable struct to hold raw data for JSON serialization
-struct RawDataPayload: Codable {
+public struct RawDataPayload: Codable {
     let foodOrders: [FoodOrder]
     let healthMetrics: [DailyHealthMetric]
 }
@@ -11,46 +11,36 @@ struct RawDataPayload: Codable {
 @ModelActor
 actor DataModelActor {
     
-    func fetchAndUpsertFoodOrders(from dataFrame: DataFrame) throws {
-        var ordersByDate = [Date: (totalSpend: Double, messageIDs: Set<String>)]()
+    private let foodOrderFetcher = FoodOrderFetcher()
+    private let healthKitService = HealthKitService()
 
-        for row in dataFrame.rows {
-            guard let date = row["Date"] as? Date,
-                  let amount = row["Amount"] as? Double,
-                  let messageID = row["MessageID"] as? String else {
-                continue
-            }
-            
-            let startOfDay = Calendar.current.startOfDay(for: date)
-            
-            if var existing = ordersByDate[startOfDay] {
-                existing.totalSpend += amount
-                existing.messageIDs.insert(messageID)
-                ordersByDate[startOfDay] = existing
-            }
-            else {
-                ordersByDate[startOfDay] = (totalSpend: amount, messageIDs: [messageID])
-            }
-        }
+    func fetchAllData() async throws {
+        try await healthKitService.requestAuthorization()
         
-        for (date, data) in ordersByDate {
-            let orderCount = data.messageIDs.count
-            let totalSpend = data.totalSpend
-            
+        // Fetch and save health data
+        let healthMetrics = try await healthKitService.fetchHealthData(for: 365)
+        try saveHealthData(metrics: healthMetrics)
+        
+        // Fetch and save food orders
+        let urlString = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQDoNEE-pV_G7CiDV9EPBNB4tKUU5nT0PJlnETrEVsJnxyiW__Et0IqU7UkOWGvLfy3jg8rc-EEBgXE/pub?gid=0&single=true&output=csv"
+        let foodOrders = try await foodOrderFetcher.fetchFoodOrders(from: urlString)
+        try upsertFoodOrders(orders: foodOrders)
+    }
+
+    private func upsertFoodOrders(orders: [Date: FoodOrderFetcher.OrderData]) throws {
+        for (date, data) in orders {
             let fetchDescriptor = FetchDescriptor<FoodOrder>(
-                predicate: #Predicate<FoodOrder> { $0.date == date }
+                predicate: #Predicate { $0.date == date }
             )
-            
+
             if let existingOrder = try modelContext.fetch(fetchDescriptor).first {
-                existingOrder.totalSpend = totalSpend
-                existingOrder.orderCount = orderCount
-            }
-            else {
-                let newOrder = FoodOrder(date: date, totalSpend: totalSpend, orderCount: orderCount)
+                existingOrder.totalSpend = data.totalSpend
+                existingOrder.orderCount = data.messageIds.count
+            } else {
+                let newOrder = FoodOrder(date: date, totalSpend: data.totalSpend, orderCount: data.messageIds.count)
                 modelContext.insert(newOrder)
             }
         }
-        
         try modelContext.save()
     }
     
