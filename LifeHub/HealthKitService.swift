@@ -88,11 +88,11 @@ class HealthKitService {
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(sampleType: bodyMassType, predicate: predicate, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                guard let sample = samples?.first as? HKQuantitySample else {
-                    continuation.resume(returning: nil)
+                    if let hkError = error as? HKError, hkError.code == .errorNoData {
+                        continuation.resume(returning: nil) // No data, return nil
+                    } else {
+                        continuation.resume(throwing: error) // Other error, throw it
+                    }
                     return
                 }
                 continuation.resume(returning: sample.quantity.doubleValue(for: .gramUnit(with: .kilo)))
@@ -111,12 +111,16 @@ class HealthKitService {
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
 
         return try await withCheckedThrowingContinuation { continuation in
-            let query = HKStatisticsQuery(quantityType: quantityType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                let sum = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+                            let query = HKStatisticsQuery(quantityType: quantityType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
+                                if let error = error {
+                                    // Check if the error is due to no data
+                                    if let hkError = error as? HKError, hkError.code == .errorNoData {
+                                        continuation.resume(returning: 0) // No data, return 0
+                                    } else {
+                                        continuation.resume(throwing: error) // Other error, throw it
+                                    }
+                                    return
+                                }                let sum = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
                 continuation.resume(returning: sum)
             }
             healthStore.execute(query)
@@ -140,7 +144,11 @@ class HealthKitService {
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    if let hkError = error as? HKError, hkError.code == .errorNoData {
+                        continuation.resume(returning: (0, nil, nil)) // No data, return default
+                    } else {
+                        continuation.resume(throwing: error) // Other error, throw it
+                    }
                     return
                 }
 
