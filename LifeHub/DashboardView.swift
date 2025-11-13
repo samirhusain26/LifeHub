@@ -64,7 +64,6 @@ struct DashboardView: View {
                             Task {
                                 if let json = await viewModel.encodePayload() {
                                     self.jsonOutput = json
-                                    UIPasteboard.general.string = json
                                 } else {
                                     self.jsonOutput = "Failed to generate JSON."
                                 }

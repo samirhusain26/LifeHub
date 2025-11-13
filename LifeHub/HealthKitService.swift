@@ -58,15 +58,6 @@ class HealthKitService {
             metrics.append(newMetric)
         }
         
-        var lastKnownWeight: Double?
-        for i in 0..<metrics.count {
-            if let weight = metrics[i].weight {
-                lastKnownWeight = weight
-            } else if let weight = lastKnownWeight {
-                metrics[i].weight = weight
-            }
-        }
-        
         return metrics
     }
 
