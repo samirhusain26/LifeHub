@@ -179,12 +179,29 @@ actor DataModelActor {
     }
     
     func saveHealthData(metrics: [DailyHealthMetric]) throws {
-        for metric in metrics {
+        let sortedMetrics = metrics.sorted { $0.date < $1.date }
+
+        var lastKnownWeight: Double?
+        if let firstDate = sortedMetrics.first?.date {
+            let descriptor = FetchDescriptor<DailyHealthMetric>(
+                predicate: #Predicate { $0.date < firstDate && $0.weight != nil },
+                sortBy: [SortDescriptor(\.date, order: .reverse)]
+            )
+            lastKnownWeight = try modelContext.fetch(descriptor).first?.weight
+        }
+
+        for metric in sortedMetrics {
+            if metric.weight == nil {
+                metric.weight = lastKnownWeight
+            } else {
+                lastKnownWeight = metric.weight
+            }
+
             let startOfDay = Calendar.current.startOfDay(for: metric.date)
             let fetchDescriptor = FetchDescriptor<DailyHealthMetric>(
                 predicate: #Predicate { $0.date == startOfDay }
             )
-            
+
             if let existingMetric = try modelContext.fetch(fetchDescriptor).first {
                 existingMetric.weight = metric.weight ?? existingMetric.weight
                 existingMetric.steps = metric.steps ?? existingMetric.steps
@@ -192,12 +209,25 @@ actor DataModelActor {
                 existingMetric.sleepDurationMinutes = metric.sleepDurationMinutes ?? existingMetric.sleepDurationMinutes
                 existingMetric.sleepStartTime = metric.sleepStartTime ?? existingMetric.sleepStartTime
                 existingMetric.sleepWakeTime = metric.sleepWakeTime ?? existingMetric.sleepWakeTime
-            }
-            else {
+            } else {
                 modelContext.insert(metric)
             }
         }
-        
+
+        try modelContext.save()
+    }
+
+    // MARK: - Test Helpers
+    
+    func insertMetric(_ metric: DailyHealthMetric) {
+        modelContext.insert(metric)
+    }
+    
+    func fetchMetrics(descriptor: FetchDescriptor<DailyHealthMetric>) throws -> [DailyHealthMetric] {
+        try modelContext.fetch(descriptor)
+    }
+    
+    func save() throws {
         try modelContext.save()
     }
 }
