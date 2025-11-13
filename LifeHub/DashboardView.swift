@@ -2,126 +2,87 @@ import SwiftUI
 import SwiftData
 
 struct DashboardView: View {
-    @StateObject var viewModel: DashboardViewModel
-    @Environment(\.modelContext) private var modelContext
-    @State private var jsonOutput: String = "JSON output will appear here..."
-    
-    
+    @State var viewModel: DashboardViewModel
+
     let columns: [GridItem] = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    
-                    // Summary Metrics Grid
+                VStack(spacing: 24) {
+                    // Header
+                    Text("LifeHub")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+
+                    // Health Stack Chart
+                    HealthStackChart(
+                        healthData: viewModel.chartHealthData,
+                        foodData: viewModel.chartFoodData,
+                        onRefresh: viewModel.refreshMetrics,
+                        onCopyJson: viewModel.getRawJson
+                    )
+                    .padding(.horizontal)
+
+                    // Metrics Grid
                     LazyVGrid(columns: columns, spacing: 16) {
-                        MetricCardView(
-                            title: "Weight Loss",
-                            value: String(format: "%.1f lbs", viewModel.weightLostFromHeaviest12Mo),
-                            iconName: "scalemass.fill"
-                        )
-                        MetricCardView(
-                            title: "Avg. Steps (7d)",
-                            value: "\(viewModel.averageStepsLast7Days)",
-                            iconName: "figure.walk"
-                        )
-                        MetricCardView(
-                            title: "Days Since Order",
-                            value: "\(viewModel.daysSinceLastFoodOrder)",
-                            iconName: "cart.fill"
-                        )
-                        MetricCardView(
-                            title: "Longest Streak",
-                            value: "\(viewModel.longestStreakNoOrders12Mo) days",
-                            iconName: "flame.fill"
-                        )
+                        MetricCardView(title: "Active Days (L7D)", value: viewModel.activeDayRatio, iconName: "figure.run")
+                        MetricCardView(title: "Energy WoW", value: viewModel.energyWoW, iconName: "flame.fill")
+                        MetricCardView(title: "Sleep Consistency", value: viewModel.sleepConsistency, iconName: "bed.double.fill")
+                        MetricCardView(title: "Delivery Spend", value: viewModel.deliverySpendTrends, iconName: "fork.knife")
+                        MetricCardView(title: "Clean Streak", value: viewModel.cleanStreak, iconName: "leaf.fill")
+                        MetricCardView(title: "Weight Trend (L45D)", value: viewModel.weightTrend, iconName: "chart.line.downtrend.xyaxis")
+                        MetricCardView(title: "Weight Goal", value: viewModel.weightGap, iconName: "scalemass")
                     }
                     .padding(.horizontal)
-
-                    // JSON Output
-                    ScrollView {
-                        Text(jsonOutput)
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-
-                    // Action Buttons
-                    VStack(spacing: 15) {
-                        Button("Refresh All Data") {
-                            viewModel.fetchAllDataAndRecalculateMetrics()
-                        }
-                        .buttonStyle(.borderedProminent)
-
-                        Button("Generate JSON") {
-                            Task {
-                                if let json = await viewModel.encodePayload() {
-                                    self.jsonOutput = json
-                                } else {
-                                    self.jsonOutput = "Failed to generate JSON."
-                                }
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Text(viewModel.statusMessage)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 5)
-                    }
-                    .padding()
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("LifeHub Dashboard")
-            .onAppear {
-                viewModel.calculateSummaryMetrics()
+            .background(Color(.systemGroupedBackground))
+            .navigationBarHidden(true)
+            .refreshable {
+                viewModel.fetchAllData()
             }
-            .background(Color(.systemGroupedBackground)) // Use a grouped background for better contrast
         }
     }
 }
-
-struct MetricCardView: View {
-    let title: String
-    let value: String
-    let iconName: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: iconName)
-                .font(.title)
-                .foregroundColor(.accentColor)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.footnote)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
-
 
 #Preview {
     let container = try! ModelContainer(for: DailyHealthMetric.self, FoodOrder.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let viewModel = DashboardViewModel(modelContainer: container)
-    DashboardView(viewModel: viewModel)
+    
+    // Add some mock data for a better preview
+    Task { @MainActor in
+        let context = container.mainContext
+        let today = Date()
+        for i in 0..<90 {
+            let date = Calendar.current.date(byAdding: .day, value: -i, to: today)!
+            let metric = DailyHealthMetric(
+                date: date,
+                weight: 210.0 - Double(i)/5.0,
+                steps: 7000 + Int.random(in: -2000...5000),
+                activeCalories: 600 + Double.random(in: -150...200),
+                sleepDurationMinutes: 420 + Double.random(in: -80...60),
+                sleepWakeTime: Calendar.current.date(byAdding: .minute, value: Int.random(in: -30...30), to: date.addingTimeInterval(8*60*60))
+            )
+            context.insert(metric)
+        }
+        for i in [3, 10, 25, 40, 50] {
+             let order = FoodOrder(
+                date: Calendar.current.date(byAdding: .day, value: -i, to: today)!,
+                totalSpend: Double.random(in: 20...50),
+                orderCount: 1
+             )
+            context.insert(order)
+        }
+        viewModel.fetchAllData()
+    }
+    
+    return DashboardView(viewModel: viewModel)
         .modelContainer(container)
 }

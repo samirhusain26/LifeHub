@@ -145,14 +145,14 @@ actor DataModelActor {
     }
     
     func generateRawDataJson() -> String {
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let fourteenDaysAgo = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
         
         let foodOrdersDescriptor = FetchDescriptor<FoodOrder>(
-            predicate: #Predicate { $0.date >= sevenDaysAgo },
+            predicate: #Predicate { $0.date >= fourteenDaysAgo },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         let healthMetricsDescriptor = FetchDescriptor<DailyHealthMetric>(
-            predicate: #Predicate { $0.date >= sevenDaysAgo },
+            predicate: #Predicate { $0.date >= fourteenDaysAgo },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         
