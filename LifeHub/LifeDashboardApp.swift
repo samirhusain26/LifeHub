@@ -15,7 +15,7 @@ struct LifeDashboardApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView(viewModel: DashboardViewModel(modelContainer: modelContainer))
+            DashboardView(modelContainer: modelContainer)
         }
         .modelContainer(modelContainer)
     }

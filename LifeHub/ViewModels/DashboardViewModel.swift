@@ -7,7 +7,7 @@ class DashboardViewModel {
     // MARK: - Metrics
     var activeDayRatio: String = "0/7 Days"
     var energyWoW: String = "0 Kcal (0%)"
-    var sleepConsistency: String = "Wake ±0m • Dur ±0m"
+    var sleepConsistency: (wake: Double, duration: Double) = (0,0)
     var deliverySpendTrends: String = "30d: $0 (0%) • Yr: $0"
     var cleanStreak: String = "0 Days Clean"
     var weightTrend: String = "-0 lbs from high"
@@ -26,33 +26,25 @@ class DashboardViewModel {
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
         self.dataModelActor = DataModelActor(modelContainer: modelContainer)
-        fetchAllData()
     }
     
-    func fetchAllData() {
-        Task { @MainActor in
-            do {
-                // Use a descriptor to fetch all data, sorted by date
-                let healthDescriptor = FetchDescriptor<DailyHealthMetric>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-                let foodDescriptor = FetchDescriptor<FoodOrder>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-                
-                self.healthData = try modelContainer.mainContext.fetch(healthDescriptor)
-                self.foodData = try modelContainer.mainContext.fetch(foodDescriptor)
-                
-                self.calculateMetrics()
-            } catch {
-                print("Error fetching data: \(error.localizedDescription)")
-            }
-        }
+    @MainActor
+    func fetchAllData() async throws {
+        // Use a descriptor to fetch all data, sorted by date
+        let healthDescriptor = FetchDescriptor<DailyHealthMetric>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        let foodDescriptor = FetchDescriptor<FoodOrder>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        
+        let fetchedHealthData = try modelContainer.mainContext.fetch(healthDescriptor)
+        let fetchedFoodData = try modelContainer.mainContext.fetch(foodDescriptor)
+        
+        self.healthData = fetchedHealthData
+        self.foodData = fetchedFoodData
+        self.calculateMetrics()
     }
 
-    func refreshMetrics() {
-        Task {
-            try? await dataModelActor.fetchAllData()
-            await MainActor.run {
-                self.fetchAllData()
-            }
-        }
+    func refreshMetrics() async throws {
+        try await dataModelActor.fetchAllData()
+        try await fetchAllData()
     }
 
     func getRawJson() async -> String {
@@ -101,11 +93,11 @@ class DashboardViewModel {
         return "\(Int(recentWeekEnergy)) Kcal (\(percentageChange))"
     }
 
-    private func calculateSleepConsistency() -> String {
+    private func calculateSleepConsistency() -> (wake: Double, duration: Double) {
         let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date().startOfDay)!
         let validSleepData = healthData.filter { $0.date >= sevenDaysAgo && ($0.sleepDurationMinutes ?? 0) > 0 }
 
-        guard !validSleepData.isEmpty else { return "No Sleep Data" }
+        guard !validSleepData.isEmpty else { return (0, 0) }
 
         let wakeTimesInMinutes = validSleepData.compactMap { metric -> Double? in
             guard let wakeTime = metric.sleepWakeTime else { return nil }
@@ -118,7 +110,7 @@ class DashboardViewModel {
         let wakeStdDev = wakeTimesInMinutes.standardDeviation()
         let durationStdDev = sleepDurations.standardDeviation()
 
-        return "Wake ±\(Int(round(wakeStdDev)))m • Dur ±\(Int(round(durationStdDev)))m"
+        return (wakeStdDev, durationStdDev)
     }
 
     private func calculateDeliverySpendTrends() -> String {
@@ -139,16 +131,16 @@ class DashboardViewModel {
         let momChange = calculatePercentageChange(current: last30dSpend, previous: prev30dSpend)
         let yoyChange = calculatePercentageChange(current: last365dSpend, previous: prev365dSpend)
 
-        return "30d: $\(Int(last30dSpend)) (\(momChange)) • Yr: $\(Int(last365dSpend)) (\(yoyChange))"
+        return "$\(Int(last30dSpend)) (\(momChange)) • $\(Int(last365dSpend)) (\(yoyChange))"
     }
 
     private func calculateCleanStreak() -> String {
         guard let lastOrderDate = foodData.max(by: { $0.date < $1.date })?.date else {
             // If no orders, maybe return days since app start or a large number
-            return "∞ Days Clean"
+            return "∞"
         }
         let days = Calendar.current.dateComponents([.day], from: lastOrderDate.startOfDay, to: Date().startOfDay).day ?? 0
-        return "\(days) Days Clean"
+        return "\(days)"
     }
 
     private func calculateWeightTrend() -> String {

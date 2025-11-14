@@ -6,44 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXContainerItemProxy section */
-		99BEE7052E307EF100B3B077 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 99BEE6EF2E307EEF00B3B077 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 99BEE6F62E307EEF00B3B077;
-			remoteInfo = LifeHub;
-		};
-		99BEE70F2E307EF100B3B077 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 99BEE6EF2E307EEF00B3B077 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 99BEE6F62E307EEF00B3B077;
-			remoteInfo = LifeHub;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		99BEE6F72E307EEF00B3B077 /* LifeHub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeHub.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		99BEE7042E307EF100B3B077 /* LifeHubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LifeHubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		99BEE70E2E307EF100B3B077 /* LifeHubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LifeHubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		996578A22EC17A3B00A0BF8B /* Exceptions for "LifeHub" folder in "LifeHubTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Data/LifeHub.xcdatamodeld,
-			);
-			target = 99BEE7032E307EF100B3B077 /* LifeHubTests */;
-		};
-		996578A32EC17A3B00A0BF8B /* Exceptions for "LifeHub" folder in "LifeHubUITests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Data/LifeHub.xcdatamodeld,
-			);
-			target = 99BEE70D2E307EF100B3B077 /* LifeHubUITests */;
-		};
 		99962F9F2EC1668E0080FA01 /* Exceptions for "LifeHub" folder in "LifeHub" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -59,8 +26,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				99962F9F2EC1668E0080FA01 /* Exceptions for "LifeHub" folder in "LifeHub" target */,
-				996578A22EC17A3B00A0BF8B /* Exceptions for "LifeHub" folder in "LifeHubTests" target */,
-				996578A32EC17A3B00A0BF8B /* Exceptions for "LifeHub" folder in "LifeHubUITests" target */,
 			);
 			path = LifeHub;
 			sourceTree = "<group>";
@@ -85,20 +50,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		99BEE7012E307EF100B3B077 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		99BEE70B2E307EF100B3B077 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -116,8 +67,6 @@
 			isa = PBXGroup;
 			children = (
 				99BEE6F72E307EEF00B3B077 /* LifeHub.app */,
-				99BEE7042E307EF100B3B077 /* LifeHubTests.xctest */,
-				99BEE70E2E307EF100B3B077 /* LifeHubUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -147,52 +96,6 @@
 			productReference = 99BEE6F72E307EEF00B3B077 /* LifeHub.app */;
 			productType = "com.apple.product-type.application";
 		};
-		99BEE7032E307EF100B3B077 /* LifeHubTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 99BEE71B2E307EF100B3B077 /* Build configuration list for PBXNativeTarget "LifeHubTests" */;
-			buildPhases = (
-				99BEE7002E307EF100B3B077 /* Sources */,
-				99BEE7012E307EF100B3B077 /* Frameworks */,
-				99BEE7022E307EF100B3B077 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				99BEE7062E307EF100B3B077 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				99BEE7072E307EF100B3B077 /* LifeHubTests */,
-			);
-			name = LifeHubTests;
-			packageProductDependencies = (
-			);
-			productName = LifeHubTests;
-			productReference = 99BEE7042E307EF100B3B077 /* LifeHubTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		99BEE70D2E307EF100B3B077 /* LifeHubUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 99BEE71E2E307EF100B3B077 /* Build configuration list for PBXNativeTarget "LifeHubUITests" */;
-			buildPhases = (
-				99BEE70A2E307EF100B3B077 /* Sources */,
-				99BEE70B2E307EF100B3B077 /* Frameworks */,
-				99BEE70C2E307EF100B3B077 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				99BEE7102E307EF100B3B077 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				99BEE7112E307EF100B3B077 /* LifeHubUITests */,
-			);
-			name = LifeHubUITests;
-			packageProductDependencies = (
-			);
-			productName = LifeHubUITests;
-			productReference = 99BEE70E2E307EF100B3B077 /* LifeHubUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,14 +108,6 @@
 				TargetAttributes = {
 					99BEE6F62E307EEF00B3B077 = {
 						CreatedOnToolsVersion = 16.4;
-					};
-					99BEE7032E307EF100B3B077 = {
-						CreatedOnToolsVersion = 16.4;
-						TestTargetID = 99BEE6F62E307EEF00B3B077;
-					};
-					99BEE70D2E307EF100B3B077 = {
-						CreatedOnToolsVersion = 16.4;
-						TestTargetID = 99BEE6F62E307EEF00B3B077;
 					};
 				};
 			};
@@ -231,28 +126,12 @@
 			projectRoot = "";
 			targets = (
 				99BEE6F62E307EEF00B3B077 /* LifeHub */,
-				99BEE7032E307EF100B3B077 /* LifeHubTests */,
-				99BEE70D2E307EF100B3B077 /* LifeHubUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		99BEE6F52E307EEF00B3B077 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		99BEE7022E307EF100B3B077 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		99BEE70C2E307EF100B3B077 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -269,34 +148,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		99BEE7002E307EF100B3B077 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		99BEE70A2E307EF100B3B077 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		99BEE7062E307EF100B3B077 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 99BEE6F62E307EEF00B3B077 /* LifeHub */;
-			targetProxy = 99BEE7052E307EF100B3B077 /* PBXContainerItemProxy */;
-		};
-		99BEE7102E307EF100B3B077 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 99BEE6F62E307EEF00B3B077 /* LifeHub */;
-			targetProxy = 99BEE70F2E307EF100B3B077 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		99BEE7162E307EF100B3B077 /* Debug */ = {
@@ -486,74 +338,6 @@
 			};
 			name = Release;
 		};
-		99BEE71C2E307EF100B3B077 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samirhusain.LifeHubTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LifeHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LifeHub";
-			};
-			name = Debug;
-		};
-		99BEE71D2E307EF100B3B077 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samirhusain.LifeHubTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LifeHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LifeHub";
-			};
-			name = Release;
-		};
-		99BEE71F2E307EF100B3B077 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samirhusain.LifeHubUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_TARGET_NAME = LifeHub;
-			};
-			name = Debug;
-		};
-		99BEE7202E307EF100B3B077 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = samirhusain.LifeHubUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_TARGET_NAME = LifeHub;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -571,24 +355,6 @@
 			buildConfigurations = (
 				99BEE7192E307EF100B3B077 /* Debug */,
 				99BEE71A2E307EF100B3B077 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		99BEE71B2E307EF100B3B077 /* Build configuration list for PBXNativeTarget "LifeHubTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				99BEE71C2E307EF100B3B077 /* Debug */,
-				99BEE71D2E307EF100B3B077 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		99BEE71E2E307EF100B3B077 /* Build configuration list for PBXNativeTarget "LifeHubUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				99BEE71F2E307EF100B3B077 /* Debug */,
-				99BEE7202E307EF100B3B077 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
